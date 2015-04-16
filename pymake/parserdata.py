@@ -7,7 +7,6 @@ from six.moves import range
 
 from . import data
 from . import parser
-from . import functions
 from . import util
 from pymake.globrelative import hasglob, glob
 
