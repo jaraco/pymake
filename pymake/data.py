@@ -8,6 +8,8 @@ import os
 import sys
 import io
 
+import six
+
 from . import globrelative
 from . import parserdata
 from . import parser
@@ -16,10 +18,6 @@ from . import process
 from . import util
 from . import implicit
 
-if sys.version_info[0] < 3:
-    str_type = basestring
-else:
-    str_type = str
 
 _log = logging.getLogger('pymake.data')
 
@@ -157,7 +155,7 @@ class StringExpansion(BaseExpansion):
     simple = True
 
     def __init__(self, s, loc):
-        assert isinstance(s, str_type)
+        assert isinstance(s, six.string_types)
         self.s = s
         self.loc = loc
 

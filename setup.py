@@ -25,6 +25,7 @@ setup_params = dict(
 	url="https://pypi.python.org/pypi/pymake",
 	packages=setuptools.find_packages(),
 	install_requires=[
+		'six',
 	],
 	setup_requires=[
 		'setuptools_scm',
