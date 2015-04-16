@@ -1,4 +1,6 @@
-import logging, re, os
+import logging
+import re
+import os
 import data, parser, functions, util
 from cStringIO import StringIO
 from pymake.globrelative import hasglob, glob

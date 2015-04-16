@@ -2,8 +2,13 @@
 Makefile functions.
 """
 
-import parser, util
-import subprocess, os, logging, sys
+import subprocess
+import os
+import logging
+import sys
+
+import parser
+import util
 from globrelative import glob
 from cStringIO import StringIO
 
@@ -752,7 +757,7 @@ class FlavorFunction(Function):
 
     def resolve(self, makefile, variables, fd, setting):
         varname = self._arguments[0].resolvestr(makefile, variables, setting)
-        
+
         flavor, source, value = variables.get(varname)
         if flavor is None:
             r = 'undefined'

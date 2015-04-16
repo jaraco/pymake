@@ -2,7 +2,10 @@
 A representation of makefile data structures.
 """
 
-import logging, re, os, sys
+import logging
+import re
+import os
+import sys
 import parserdata, parser, functions, process, util, implicit
 import globrelative
 from cStringIO import StringIO
@@ -426,7 +429,7 @@ class Expansion(BaseExpansion, list):
 
 class Variables(object):
     """
-    A mapping from variable names to variables. Variables have flavor, source, and value. The value is an 
+    A mapping from variable names to variables. Variables have flavor, source, and value. The value is an
     expansion object.
     """
 
@@ -489,7 +492,7 @@ class Variables(object):
                     pvalue.concat(valueexp)
 
                     return pflavor, psource, pvalue
-                    
+
             if not expand:
                 return flavor, source, valuestr
 
@@ -833,7 +836,7 @@ class RemakeRuleContext(object):
             if not self.makefile.keepgoing:
                 self.resolvecb(error=True, didanything=self.didanything)
                 return
-        
+
         if len(self.resolvelist):
             dep, weak = self.resolvelist.pop(0)
             self.makefile.context.defer(dep.make,
@@ -1040,7 +1043,7 @@ class Target(object):
 
             for ri in r.matchesfor(dir, file, hasmatch):
                 candidates.append(ri)
-            
+
         newcandidates = []
 
         for r in candidates:
@@ -1114,7 +1117,7 @@ class Target(object):
                     " -> ".join(targetstack), self.target))
 
         targetstack = targetstack + [self.target]
-        
+
         indent = getindent(targetstack)
 
         _log.info("%sConsidering target '%s'", indent, self.target)
@@ -1219,7 +1222,7 @@ class Target(object):
                 return (t, mtime)
 
         return None
-        
+
     def beingremade(self):
         """
         When we remake ourself, we have to drop any vpath prefixes.
@@ -1240,7 +1243,7 @@ class Target(object):
         self._state = MAKESTATE_FINISHED
         for cb in self._callbacks:
             makefile.context.defer(cb, error=self.error, didanything=self.didanything)
-        del self._callbacks 
+        del self._callbacks
 
     def make(self, makefile, targetstack, cb, avoidremakeloop=False, printerror=True):
         """
@@ -1263,11 +1266,11 @@ class Target(object):
         """
 
         serial = makefile.context.jcount == 1
-        
+
         if self._state == MAKESTATE_FINISHED:
             cb(error=self.error, didanything=self.didanything)
             return
-            
+
         if self._state == MAKESTATE_WORKING:
             assert not serial
             self._callbacks.append(cb)
@@ -1343,7 +1346,7 @@ def setautomaticvariables(v, makefile, target, prerequisites):
     prall = [pt.vpathtarget for pt in prtargets]
     proutofdate = [pt.vpathtarget for pt in withoutdups(prtargets)
                    if target.mtime is None or mtimeislater(pt.mtime, target.mtime)]
-    
+
     setautomatic(v, '@', [target.vpathtarget])
     if len(prall):
         setautomatic(v, '<', [prall[0]])

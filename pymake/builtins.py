@@ -1,5 +1,9 @@
 # Basic commands implemented in Python
-import errno, sys, os, shutil, time
+import errno
+import sys
+import os
+import shutil
+import time
 from getopt import getopt, GetoptError
 
 from process import PythonException

@@ -6,7 +6,9 @@ Filename globbing like the python glob module with minor differences:
 * check that link targets exist, not just links
 """
 
-import os, re, fnmatch
+import os
+import re
+import fnmatch
 import util
 
 _globcheck = re.compile('[[*?]')

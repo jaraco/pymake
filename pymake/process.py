@@ -5,7 +5,15 @@ parsing command lines into argv and making sure that no shell magic is being use
 
 #TODO: ship pyprocessing?
 import multiprocessing
-import subprocess, shlex, re, logging, sys, traceback, os, imp, glob
+import subprocess
+import shlex
+import re
+import logging
+import sys
+import traceback
+import os
+import imp
+import glob
 import site
 from collections import deque
 # XXXkhuey Work around http://bugs.python.org/issue1731717
@@ -206,10 +214,10 @@ def clinetoargv(cline, cwd):
 # executed within a shell. It also contains a set of commands that are known
 # to be giving problems when run directly instead of through the msys shell.
 shellwords = (':', '.', 'break', 'cd', 'continue', 'exec', 'exit', 'export',
-              'getopts', 'hash', 'pwd', 'readonly', 'return', 'shift', 
+              'getopts', 'hash', 'pwd', 'readonly', 'return', 'shift',
               'test', 'times', 'trap', 'umask', 'unset', 'alias',
               'set', 'bind', 'builtin', 'caller', 'command', 'declare',
-              'echo', 'enable', 'help', 'let', 'local', 'logout', 
+              'echo', 'enable', 'help', 'let', 'local', 'logout',
               'printf', 'read', 'shopt', 'source', 'type', 'typeset',
               'ulimit', 'unalias', 'set', 'find')
 
@@ -513,7 +521,7 @@ class ParallelContext(object):
         condition.release()
 
         return jobs
-        
+
     @staticmethod
     def spin():
         """

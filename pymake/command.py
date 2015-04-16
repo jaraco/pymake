@@ -9,10 +9,17 @@ structure, environment, and working directory. Typically they will all share a p
 except when a submake specifies -j1 when the parent make is building in parallel.
 """
 
-import os, subprocess, sys, logging, time, traceback, re
+import os
+import subprocess
+import sys
+import logging
+import time
+import traceback
+import re
 import gc
-from optparse import OptionParser
-import data, parserdata, process, util
+import optparse
+
+from . import data, parserdata, process, util
 
 # TODO: If this ever goes from relocatable package to system-installed, this may need to be
 # a configured-in path.
@@ -172,7 +179,7 @@ def main(args, env, cwd, cb):
     try:
         makelevel = int(env.get('MAKELEVEL', '0'))
 
-        op = OptionParser()
+        op = optparse.OptionParser()
         op.add_option('-f', '--file', '--makefile',
                       action='append',
                       dest='makefiles',
