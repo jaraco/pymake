@@ -42,12 +42,14 @@ KNOWN INCOMPATIBILITIES
 
 * There is a subtle difference in execution order that can cause unexpected changes in the
   following circumstance:
-** A file `foo.c` exists on the VPATH
-** A rule for `foo.c` exists with a dependency on `tool` and no commands
-** `tool` is remade for some other reason earlier in the file
-  In this case, pymake resets the VPATH of `foo.c`, while GNU make does not. This shouldn't
-  happen in the real world, since a target found on the VPATH without commands is silly. But
-  mozilla/js/src happens to have a rule, which I'm patching.
+
+  * A file `foo.c` exists on the VPATH
+  * A rule for `foo.c` exists with a dependency on `tool` and no commands
+  * `tool` is remade for some other reason earlier in the file
+    In this case, pymake resets the VPATH of `foo.c`, while GNU make does not.
+    This shouldn't
+    happen in the real world, since a target found on the VPATH without commands is silly. But
+    mozilla/js/src happens to have a rule, which I'm patching.
 
 * pymake does not implement any of the builtin implicit rules or the related variables. Mozilla
   only cares because pymake doesn't implicitly define $(RM), which I'm also fixing in the Mozilla
@@ -62,8 +64,9 @@ FUTURE WORK
 -----------
 
 * implement a new type of command which is implemented in python. This would allow us
-to replace the current `nsinstall` binary (and execution costs for the shell and binary) with an
-in-process python solution.
+  to replace the current `nsinstall` binary (and execution costs for the shell
+  and binary) with an
+  in-process python solution.
 
 AUTHOR
 ------
