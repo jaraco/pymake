@@ -7,7 +7,7 @@ import time
 
 from getopt import getopt, GetoptError
 
-from process import PythonException
+from .process import PythonException
 
 __all__ = ["mkdir", "rm", "sleep", "touch"]
 

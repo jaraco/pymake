@@ -9,7 +9,8 @@ Filename globbing like the python glob module with minor differences:
 import os
 import re
 import fnmatch
-import util
+
+from . import util
 
 _globcheck = re.compile('[[*?]')
 

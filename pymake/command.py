@@ -10,16 +10,16 @@ except when a submake specifies -j1 when the parent make is building in parallel
 """
 
 import os
-import subprocess
 import sys
 import logging
-import time
-import traceback
 import re
 import gc
 import optparse
 
-from . import data, parserdata, process, util
+from . import data
+from . import parserdata
+from . import process
+from . import util
 
 # TODO: If this ever goes from relocatable package to system-installed, this may need to be
 # a configured-in path.

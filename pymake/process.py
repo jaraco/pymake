@@ -8,21 +8,22 @@ from __future__ import print_function
 #TODO: ship pyprocessing?
 import multiprocessing
 import subprocess
-import shlex
 import re
 import logging
 import sys
 import traceback
 import os
-import imp
 import glob
 import site
 from collections import deque
-# XXXkhuey Work around http://bugs.python.org/issue1731717
-subprocess._cleanup = lambda: None
-import command, util
+from . import command
+from . import util
+
 if sys.platform=='win32':
     import win32process
+
+# XXXkhuey Work around http://bugs.python.org/issue1731717
+subprocess._cleanup = lambda: None
 
 _log = logging.getLogger('pymake.process')
 

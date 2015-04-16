@@ -6,9 +6,15 @@ import logging
 import re
 import os
 import sys
-import parserdata, parser, functions, process, util, implicit
-import globrelative
 from cStringIO import StringIO
+
+from . import globrelative
+from . import parserdata
+from . import parser
+from . import functions
+from . import process
+from . import util
+from . import implicit
 
 if sys.version_info[0] < 3:
     str_type = basestring

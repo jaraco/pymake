@@ -9,10 +9,11 @@ import os
 import logging
 import sys
 
-import parser
-import util
-from globrelative import glob
 from cStringIO import StringIO
+
+from . import parser
+from . import util
+from .globrelative import glob
 
 log = logging.getLogger('pymake.data')
 
