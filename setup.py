@@ -39,6 +39,12 @@ setup_params = dict(
 		"Programming Language :: Python :: 2.7",
 		"Programming Language :: Python :: 3",
 	],
+	entry_points={
+		'console_scripts': [
+			"make=pymake.command.alt_main",
+		],
+	},
 )
+
 if __name__ == '__main__':
 	setuptools.setup(**setup_params)

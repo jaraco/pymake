@@ -10,6 +10,7 @@ except when a submake specifies -j1 when the parent make is building in parallel
 """
 
 import os, subprocess, sys, logging, time, traceback, re
+import gc
 from optparse import OptionParser
 import data, parserdata, process, util
 
@@ -52,7 +53,7 @@ def parsemakeflags(env):
             if i == len(makeflags):
                 raise data.DataError("MAKEFLAGS has trailing backslash")
             c = makeflags[i]
-            
+
         curopt += c
         i += 1
 
@@ -276,3 +277,13 @@ def main(args, env, cwd, cb):
         sys.stdout.flush()
         cb(2)
         return
+
+def alt_main():
+    sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+    sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 0)
+
+    gc.disable()
+
+    main(sys.argv[1:], os.environ, os.getcwd(), cb=sys.exit)
+    process.ParallelContext.spin()
+    assert False, "Not reached"
