@@ -16,8 +16,12 @@ import os
 import glob
 import site
 from collections import deque
+
+from six.moves import range
+
 from . import command
 from . import util
+
 
 if sys.platform=='win32':
     import win32process
@@ -503,7 +507,7 @@ class ParallelContext(object):
         def _checkdone():
             jobs = []
             for c in ParallelContext._allcontexts:
-                for i in xrange(0, len(c.running)):
+                for i in range(0, len(c.running)):
                     if c.running[i][0].done:
                         jobs.append(c.running[i])
                 for j in jobs:
