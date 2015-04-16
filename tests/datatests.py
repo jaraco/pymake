@@ -1,12 +1,13 @@
 import unittest
 
+import six
 from six.moves import range
 
 import pymake.data, pymake.functions, pymake.util
 
 
 def multitest(cls):
-    for name in cls.testdata.iterkeys():
+    for name in six.iterkeys(cls.testdata):
         def m(self, name=name):
             return self.runSingle(*self.testdata[name])
 
