@@ -5,8 +5,7 @@ import io
 
 from six.moves import range
 
-from . import data
-from . import parser
+import pymake
 from . import util
 from pymake.globrelative import hasglob, glob
 
@@ -93,14 +92,14 @@ def parsecommandlineargs(args):
             overrides.append(_flagescape.sub(r'\\\1', a))
 
             vname = vname.strip()
-            vnameexp = data.Expansion.fromstring(vname, "Command-line argument")
+            vnameexp = pymake.data.Expansion.fromstring(vname, "Command-line argument")
 
             stmts.append(ExportDirective(vnameexp, concurrent_set=True))
             stmts.append(SetVariable(vnameexp, token=t,
                                      value=val, valueloc=Location('<command-line>', i, len(vname) + len(t)),
-                                     targetexp=None, source=data.Variables.SOURCE_COMMANDLINE))
+                                     targetexp=None, source=pymake.data.Variables.SOURCE_COMMANDLINE))
         else:
-            r.append(data.stripdotslash(a))
+            r.append(pymake.data.stripdotslash(a))
 
     return stmts, r, ' '.join(overrides)
 
@@ -438,8 +437,9 @@ class SetVariable(Statement):
                 assert self.token == ':='
 
                 flavor = data.Variables.FLAVOR_SIMPLE
-                d = parser.Data.fromstring(self.value, self.valueloc)
-                e, t, o = parser.parsemakesyntax(d, 0, (), parser.iterdata)
+                d = pymake.parser.Data.fromstring(self.value, self.valueloc)
+                e, t, o = pymake.parser.parsemakesyntax(d, 0, (),
+                    pymake.parser.iterdata)
                 value = e.resolvestr(makefile, makefile.variables)
 
             v.set(vname, flavor, self.source, value)
@@ -640,7 +640,8 @@ class ConditionBlock(Statement):
         condition.loc = loc
 
         if len(self._groups) and isinstance(self._groups[-1][0], ElseCondition):
-            raise parser.SyntaxError("Multiple else conditions for block starting at %s" % self.loc, loc)
+            raise pymake.parser.SyntaxError(
+                "Multiple else conditions for block starting at %s" % self.loc, loc)
 
         self._groups.append((condition, StatementList()))
 

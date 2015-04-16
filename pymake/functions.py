@@ -11,7 +11,7 @@ import sys
 
 from six.moves import range
 
-from . import parser
+import pymake
 from . import util
 from .globrelative import glob
 
@@ -59,12 +59,12 @@ class Function(object):
         argc = len(self._arguments)
 
         if argc < self.minargs:
-            raise data.DataError("Not enough arguments to function %s, requires %s" % (self.name, self.minargs), self.loc)
+            raise pymake.data.DataError("Not enough arguments to function %s, requires %s" % (self.name, self.minargs), self.loc)
 
         assert self.maxargs == 0 or argc <= self.maxargs, "Parser screwed up, gave us too many args"
 
     def append(self, arg):
-        assert isinstance(arg, (data.Expansion, data.StringExpansion))
+        assert isinstance(arg, (pymake.data.Expansion, pymake.data.StringExpansion))
         self._arguments.append(arg)
 
     def to_source(self):
@@ -174,7 +174,7 @@ class VariableRef(Function):
 
     def __init__(self, loc, vname):
         self.loc = loc
-        assert isinstance(vname, (data.Expansion, data.StringExpansion))
+        assert isinstance(vname, (pymake.data.Expansion, pymake.data.StringExpansion))
         self.vname = vname
 
     def setup(self):
@@ -183,7 +183,7 @@ class VariableRef(Function):
     def resolve(self, makefile, variables, fd, setting):
         vname = self.vname.resolvestr(makefile, variables, setting)
         if vname in setting:
-            raise data.DataError("Setting variable '%s' recursively references itself." % (vname,), self.loc)
+            raise pymake.data.DataError("Setting variable '%s' recursively references itself." % (vname,), self.loc)
 
         flavor, source, value = variables.get(vname)
         if value is None:
@@ -193,7 +193,7 @@ class VariableRef(Function):
         value.resolve(makefile, variables, fd, setting + [vname])
 
     def to_source(self):
-        if isinstance(self.vname, data.StringExpansion):
+        if isinstance(self.vname, pymake.data.StringExpansion):
             if self.vname.s in self.AUTOMATIC_VARIABLES:
                 return '$%s' % self.vname.s
 
@@ -230,7 +230,7 @@ class SubstitutionRef(Function):
     def resolve(self, makefile, variables, fd, setting):
         vname = self.vname.resolvestr(makefile, variables, setting)
         if vname in setting:
-            raise data.DataError("Setting variable '%s' recursively references itself." % (vname,), self.loc)
+            raise pymake.data.DataError("Setting variable '%s' recursively references itself." % (vname,), self.loc)
 
         substfrom = self.substfrom.resolvestr(makefile, variables, setting)
         substto = self.substto.resolvestr(makefile, variables, setting)
@@ -240,9 +240,9 @@ class SubstitutionRef(Function):
             log.debug("%s: variable '%s' was not set" % (self.loc, vname))
             return
 
-        f = data.Pattern(substfrom)
+        f = pymake.data.Pattern(substfrom)
         if not f.ispattern():
-            f = data.Pattern('%' + substfrom)
+            f = pymake.data.Pattern('%' + substfrom)
             substto = '%' + substto
 
         fd.write(' '.join([f.subst(substto, word, False)
@@ -293,7 +293,7 @@ class PatSubstFunction(Function):
         s = self._arguments[0].resolvestr(makefile, variables, setting)
         r = self._arguments[1].resolvestr(makefile, variables, setting)
 
-        p = data.Pattern(s)
+        p = pymake.data.Pattern(s)
         fd.write(' '.join([p.subst(r, word, False)
                            for word in self._arguments[2].resolvesplit(makefile, variables, setting)]))
 
@@ -329,7 +329,7 @@ class FilterFunction(Function):
     __slots__ = Function.__slots__
 
     def resolve(self, makefile, variables, fd, setting):
-        plist = [data.Pattern(p)
+        plist = [pymake.data.Pattern(p)
                  for p in self._arguments[0].resolvesplit(makefile, variables, setting)]
 
         fd.write(' '.join([w for w in self._arguments[1].resolvesplit(makefile, variables, setting)
@@ -343,7 +343,7 @@ class FilteroutFunction(Function):
     __slots__ = Function.__slots__
 
     def resolve(self, makefile, variables, fd, setting):
-        plist = [data.Pattern(p)
+        plist = [pymake.data.Pattern(p)
                  for p in self._arguments[0].resolvesplit(makefile, variables, setting)]
 
         fd.write(' '.join([w for w in self._arguments[1].resolvesplit(makefile, variables, setting)
@@ -648,7 +648,7 @@ class ForEachFunction(Function):
         vname = self._arguments[0].resolvestr(makefile, variables, setting)
         e = self._arguments[2]
 
-        v = data.Variables(parent=variables)
+        v = pymake.data.Variables(parent=variables)
         firstword = True
 
         for w in self._arguments[1].resolvesplit(makefile, variables, setting):
@@ -660,8 +660,8 @@ class ForEachFunction(Function):
             # The $(origin) of the local variable must be "automatic" to
             # conform with GNU make. However, automatic variables have low
             # priority. So, we must force its assignment to occur.
-            v.set(vname, data.Variables.FLAVOR_SIMPLE,
-                    data.Variables.SOURCE_AUTOMATIC, w, force=True)
+            v.set(vname, pymake.data.Variables.FLAVOR_SIMPLE,
+                    pymake.data.Variables.SOURCE_AUTOMATIC, w, force=True)
             e.resolve(makefile, v, fd, setting)
 
 class CallFunction(Function):
@@ -674,20 +674,20 @@ class CallFunction(Function):
     def resolve(self, makefile, variables, fd, setting):
         vname = self._arguments[0].resolvestr(makefile, variables, setting)
         if vname in setting:
-            raise data.DataError("Recursively setting variable '%s'" % (vname,))
+            raise pymake.data.DataError("Recursively setting variable '%s'" % (vname,))
 
-        v = data.Variables(parent=variables)
-        v.set('0', data.Variables.FLAVOR_SIMPLE, data.Variables.SOURCE_AUTOMATIC, vname)
+        v = pymake.data.Variables(parent=variables)
+        v.set('0', pymake.data.Variables.FLAVOR_SIMPLE, pymake.data.Variables.SOURCE_AUTOMATIC, vname)
         for i in range(1, len(self._arguments)):
             param = self._arguments[i].resolvestr(makefile, variables, setting)
-            v.set(str(i), data.Variables.FLAVOR_SIMPLE, data.Variables.SOURCE_AUTOMATIC, param)
+            v.set(str(i), pymake.data.Variables.FLAVOR_SIMPLE, pymake.data.Variables.SOURCE_AUTOMATIC, param)
 
         flavor, source, e = variables.get(vname)
 
         if e is None:
             return
 
-        if flavor == data.Variables.FLAVOR_SIMPLE:
+        if flavor == pymake.data.Variables.FLAVOR_SIMPLE:
             log.warning("%s: calling variable '%s' which is simply-expanded" % (self.loc, vname))
 
         # but we'll do it anyway
@@ -716,9 +716,9 @@ class EvalFunction(Function):
         if makefile.parsingfinished:
             # GNU make allows variables to be set by recursive expansion during
             # command execution. This seems really dumb to me, so I don't!
-            raise data.DataError("$(eval) not allowed via recursive expansion after parsing is finished", self.loc)
+            raise pymake.data.DataError("$(eval) not allowed via recursive expansion after parsing is finished", self.loc)
 
-        stmts = parser.parsestring(self._arguments[0].resolvestr(makefile, variables, setting),
+        stmts = pymake.parser.parsestring(self._arguments[0].resolvestr(makefile, variables, setting),
                                    'evaluation from %s' % self.loc)
         stmts.execute(makefile)
 
@@ -735,18 +735,18 @@ class OriginFunction(Function):
         flavor, source, value = variables.get(vname)
         if source is None:
             r = 'undefined'
-        elif source == data.Variables.SOURCE_OVERRIDE:
+        elif source == pymake.data.Variables.SOURCE_OVERRIDE:
             r = 'override'
 
-        elif source == data.Variables.SOURCE_MAKEFILE:
+        elif source == pymake.data.Variables.SOURCE_MAKEFILE:
             r = 'file'
-        elif source == data.Variables.SOURCE_ENVIRONMENT:
+        elif source == pymake.data.Variables.SOURCE_ENVIRONMENT:
             r = 'environment'
-        elif source == data.Variables.SOURCE_COMMANDLINE:
+        elif source == pymake.data.Variables.SOURCE_COMMANDLINE:
             r = 'command line'
-        elif source == data.Variables.SOURCE_AUTOMATIC:
+        elif source == pymake.data.Variables.SOURCE_AUTOMATIC:
             r = 'automatic'
-        elif source == data.Variables.SOURCE_IMPLICIT:
+        elif source == pymake.data.Variables.SOURCE_IMPLICIT:
             r = 'default'
 
         fd.write(r)
@@ -764,9 +764,9 @@ class FlavorFunction(Function):
         flavor, source, value = variables.get(varname)
         if flavor is None:
             r = 'undefined'
-        elif flavor == data.Variables.FLAVOR_RECURSIVE:
+        elif flavor == pymake.data.Variables.FLAVOR_RECURSIVE:
             r = 'recursive'
-        elif flavor == data.Variables.FLAVOR_SIMPLE:
+        elif flavor == pymake.data.Variables.FLAVOR_SIMPLE:
             r = 'simple'
         fd.write(r)
 
@@ -816,7 +816,7 @@ class ErrorFunction(Function):
 
     def resolve(self, makefile, variables, fd, setting):
         v = self._arguments[0].resolvestr(makefile, variables, setting)
-        raise data.DataError(v, self.loc)
+        raise pymake.data.DataError(v, self.loc)
 
 class WarningFunction(Function):
     name = 'warning'
@@ -877,5 +877,3 @@ functionmap = {
     'warning': WarningFunction,
     'info': InfoFunction,
 }
-
-import data

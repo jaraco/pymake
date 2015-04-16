@@ -37,10 +37,9 @@ import logging
 import re
 import os
 
-from . import data
+import pymake
 from . import functions
 from . import util
-from . import parserdata
 
 _log = logging.getLogger('pymake.parser')
 
@@ -64,7 +63,7 @@ class Data(object):
 
     @staticmethod
     def fromstring(s, path):
-        return Data(s, 0, len(s), parserdata.Location(path, 1, 0))
+        return Data(s, 0, len(s), pymake.parserdata.Location(path, 1, 0))
 
     def getloc(self, offset):
         assert offset >= self.lstart and offset <= self.lend
@@ -99,13 +98,13 @@ def enumeratelines(s, filename):
             # odd number of backslashes is a continuation
             continue
 
-        yield Data(s, off, end - 1, parserdata.Location(filename, lineno, 0))
+        yield Data(s, off, end - 1, pymake.parserdata.Location(filename, lineno, 0))
 
         lineno += curlines
         curlines = 0
         off = end
 
-    yield Data(s, off, len(s), parserdata.Location(filename, lineno, 0))
+    yield Data(s, off, len(s), pymake.parserdata.Location(filename, lineno, 0))
 
 _alltokens = re.compile(r'''\\*\# | # hash mark preceeded by any number of backslashes
                             := |
@@ -317,7 +316,7 @@ def ifeq(d, offset):
 
         _ensureend(d, offset, "Unexpected text after conditional")
 
-    return parserdata.EqCondition(arg1, arg2)
+    return pymake.parserdata.EqCondition(arg1, arg2)
 
 def ifneq(d, offset):
     c = ifeq(d, offset)
@@ -328,7 +327,7 @@ def ifdef(d, offset):
     e, t, offset = parsemakesyntax(d, offset, (), itermakefilechars)
     e.rstrip()
 
-    return parserdata.IfdefCondition(e)
+    return pymake.parserdata.IfdefCondition(e)
 
 def ifndef(d, offset):
     c = ifdef(d, offset)
@@ -405,26 +404,26 @@ def parsedepfile(pathname):
 
     def get_expansion(s):
         if '$' in s:
-            expansion = data.Expansion()
+            expansion = pymake.data.Expansion()
             # for an input like e.g. "foo $(bar) baz",
             # _vars.split returns ["foo", "bar", "baz"]
             # every other element is a variable name.
             for i, element in enumerate(_vars.split(s)):
                 if i % 2:
                     expansion.appendfunc(functions.VariableRef(None,
-                        data.StringExpansion(element, None)))
+                        pymake.data.StringExpansion(element, None)))
                 elif element:
                     expansion.appendstr(element)
 
             return expansion
 
-        return data.StringExpansion(s, None)
+        return pymake.data.StringExpansion(s, None)
 
     pathname = os.path.realpath(pathname)
-    stmts = parserdata.StatementList()
+    stmts = pymake.parserdata.StatementList()
     for line in continuation_iter(open(pathname).readlines()):
         target, deps = _depfilesplitter.split(line, 1)
-        stmts.append(parserdata.Rule(get_expansion(target),
+        stmts.append(pymake.parserdata.Rule(get_expansion(target),
                                      get_expansion(deps), False))
     return stmts
 
@@ -434,7 +433,7 @@ def parsestring(s, filename):
     """
 
     currule = False
-    condstack = [parserdata.StatementList()]
+    condstack = [pymake.parserdata.StatementList()]
 
     fdlines = enumeratelines(s, filename)
     for d in fdlines:
@@ -446,7 +445,7 @@ def parsestring(s, filename):
             e, token, offset = parsemakesyntax(d, offset + 1, (), itercommandchars)
             assert token is None
             assert offset is None
-            condstack[-1].append(parserdata.Command(e))
+            condstack[-1].append(pymake.parserdata.Command(e))
             continue
 
         # To parse Makefile syntax, we first strip leading whitespace and
@@ -479,7 +478,7 @@ def parsestring(s, filename):
                 m = _conditionre.match(d.s, offset, d.lend)
                 if m is None:
                     _ensureend(d, offset, "Unexpected data after 'else' directive.")
-                    condstack[-1].addcondition(d.getloc(offset), parserdata.ElseCondition())
+                    condstack[-1].addcondition(d.getloc(offset), pymake.parserdata.ElseCondition())
                 else:
                     kword = m.group(1)
                     if kword not in _conditionkeywords:
@@ -494,7 +493,7 @@ def parsestring(s, filename):
 
             if kword in _conditionkeywords:
                 c = _conditionkeywords[kword](d, offset)
-                cb = parserdata.ConditionBlock(d.getloc(d.lstart), c)
+                cb = pymake.parserdata.ConditionBlock(d.getloc(d.lstart), c)
                 condstack[-1].append(cb)
                 condstack.append(cb)
                 continue
@@ -509,7 +508,7 @@ def parsestring(s, filename):
 
                 startloc = d.getloc(d.lstart)
                 value = iterdefinelines(fdlines, startloc)
-                condstack[-1].append(parserdata.SetVariable(vname, value=value, valueloc=startloc, token='=', targetexp=None))
+                condstack[-1].append(pymake.parserdata.SetVariable(vname, value=value, valueloc=startloc, token='=', targetexp=None))
                 continue
 
             if kword in ('include', '-include', 'includedeps', '-includedeps'):
@@ -523,14 +522,14 @@ def parsestring(s, filename):
 
                 currule = False
                 incfile, t, offset = parsemakesyntax(d, offset, (), itermakefilechars)
-                condstack[-1].append(parserdata.Include(incfile, required, deps))
+                condstack[-1].append(pymake.parserdata.Include(incfile, required, deps))
 
                 continue
 
             if kword == 'vpath':
                 currule = False
                 e, t, offset = parsemakesyntax(d, offset, (), itermakefilechars)
-                condstack[-1].append(parserdata.VPathDirective(e))
+                condstack[-1].append(pymake.parserdata.VPathDirective(e))
                 continue
 
             if kword == 'override':
@@ -544,7 +543,7 @@ def parsestring(s, filename):
 
                 value = flattenmakesyntax(d, offset).lstrip()
 
-                condstack[-1].append(parserdata.SetVariable(vname, value=value, valueloc=d.getloc(offset), token=token, targetexp=None, source=data.Variables.SOURCE_OVERRIDE))
+                condstack[-1].append(pymake.parserdata.SetVariable(vname, value=value, valueloc=d.getloc(offset), token=token, targetexp=None, source=pymake.data.Variables.SOURCE_OVERRIDE))
                 continue
 
             if kword == 'export':
@@ -554,18 +553,18 @@ def parsestring(s, filename):
                 e.rstrip()
 
                 if token is None:
-                    condstack[-1].append(parserdata.ExportDirective(e, concurrent_set=False))
+                    condstack[-1].append(pymake.parserdata.ExportDirective(e, concurrent_set=False))
                 else:
-                    condstack[-1].append(parserdata.ExportDirective(e, concurrent_set=True))
+                    condstack[-1].append(pymake.parserdata.ExportDirective(e, concurrent_set=True))
 
                     value = flattenmakesyntax(d, offset).lstrip()
-                    condstack[-1].append(parserdata.SetVariable(e, value=value, valueloc=d.getloc(offset), token=token, targetexp=None))
+                    condstack[-1].append(pymake.parserdata.SetVariable(e, value=value, valueloc=d.getloc(offset), token=token, targetexp=None))
 
                 continue
 
             if kword == 'unexport':
                 e, token, offset = parsemakesyntax(d, offset, (), itermakefilechars)
-                condstack[-1].append(parserdata.UnexportDirective(e))
+                condstack[-1].append(pymake.parserdata.UnexportDirective(e))
                 continue
 
         e, token, offset = parsemakesyntax(d, offset, _varsettokens + ('::', ':'), itermakefilechars)
@@ -573,7 +572,7 @@ def parsestring(s, filename):
             e.rstrip()
             e.lstrip()
             if not e.isempty():
-                condstack[-1].append(parserdata.EmptyDirective(e))
+                condstack[-1].append(pymake.parserdata.EmptyDirective(e))
             continue
 
         # if we encountered real makefile syntax, the current rule is over
@@ -585,7 +584,7 @@ def parsestring(s, filename):
 
             value = flattenmakesyntax(d, offset).lstrip()
 
-            condstack[-1].append(parserdata.SetVariable(e, value=value, valueloc=d.getloc(offset), token=token, targetexp=None))
+            condstack[-1].append(pymake.parserdata.SetVariable(e, value=value, valueloc=d.getloc(offset), token=token, targetexp=None))
         else:
             doublecolon = token == '::'
 
@@ -603,20 +602,20 @@ def parsestring(s, filename):
                                                _varsettokens + (':', '|', ';'),
                                                itermakefilechars)
             if token in (None, ';'):
-                condstack[-1].append(parserdata.Rule(targets, e, doublecolon))
+                condstack[-1].append(pymake.parserdata.Rule(targets, e, doublecolon))
                 currule = True
 
                 if token == ';':
                     offset = d.skipwhitespace(offset)
                     e, t, offset = parsemakesyntax(d, offset, (), itercommandchars)
-                    condstack[-1].append(parserdata.Command(e))
+                    condstack[-1].append(pymake.parserdata.Command(e))
 
             elif token in _varsettokens:
                 e.lstrip()
                 e.rstrip()
 
                 value = flattenmakesyntax(d, offset).lstrip()
-                condstack[-1].append(parserdata.SetVariable(e, value=value, valueloc=d.getloc(offset), token=token, targetexp=targets))
+                condstack[-1].append(pymake.parserdata.SetVariable(e, value=value, valueloc=d.getloc(offset), token=token, targetexp=targets))
             elif token == '|':
                 raise SyntaxError('order-only prerequisites not implemented', d.getloc(offset))
             else:
@@ -627,13 +626,13 @@ def parsestring(s, filename):
 
                 deps, token, offset = parsemakesyntax(d, offset, (';',), itermakefilechars)
 
-                condstack[-1].append(parserdata.StaticPatternRule(targets, pattern, deps, doublecolon))
+                condstack[-1].append(pymake.parserdata.StaticPatternRule(targets, pattern, deps, doublecolon))
                 currule = True
 
                 if token == ';':
                     offset = d.skipwhitespace(offset)
                     e, token, offset = parsemakesyntax(d, offset, (), itercommandchars)
-                    condstack[-1].append(parserdata.Command(e))
+                    condstack[-1].append(pymake.parserdata.Command(e))
 
     if len(condstack) != 1:
         raise SyntaxError("Condition never terminated with endif", condstack[-1].loc)
@@ -687,7 +686,7 @@ def parsemakesyntax(d, offset, stopon, iterfunc):
 
     assert callable(iterfunc)
 
-    stacktop = ParseStackFrame(_PARSESTATE_TOPLEVEL, None, data.Expansion(loc=d.getloc(d.lstart)),
+    stacktop = ParseStackFrame(_PARSESTATE_TOPLEVEL, None, pymake.data.Expansion(loc=d.getloc(d.lstart)),
                                tokenlist=stopon + ('$',),
                                openbrace=None, closebrace=None)
 
@@ -723,7 +722,7 @@ def parsemakesyntax(d, offset, stopon, iterfunc):
                 if len(token) > 2:
                     fname = token[2:].rstrip()
                     fn = functions.functionmap[fname](loc)
-                    e = data.Expansion()
+                    e = pymake.data.Expansion()
                     if len(fn) + 1 == fn.maxargs:
                         tokenlist = (c, closebrace, '$')
                     else:
@@ -733,14 +732,14 @@ def parsemakesyntax(d, offset, stopon, iterfunc):
                                                e, tokenlist, function=fn,
                                                openbrace=c, closebrace=closebrace)
                 else:
-                    e = data.Expansion()
+                    e = pymake.data.Expansion()
                     tokenlist = (':', c, closebrace, '$')
                     stacktop = ParseStackFrame(_PARSESTATE_VARNAME, stacktop,
                                                e, tokenlist,
                                                openbrace=c, closebrace=closebrace, loc=loc)
             else:
                 assert len(token) == 2
-                e = data.Expansion.fromstring(c, loc)
+                e = pymake.data.Expansion.fromstring(c, loc)
                 stacktop.expansion.appendfunc(functions.VariableRef(loc, e))
         elif token in ('(', '{'):
             assert token == stacktop.openbrace
@@ -761,7 +760,7 @@ def parsemakesyntax(d, offset, stopon, iterfunc):
             if token == ',':
                 stacktop.function.append(stacktop.expansion.finish())
 
-                stacktop.expansion = data.Expansion()
+                stacktop.expansion = pymake.data.Expansion()
                 if len(stacktop.function) + 1 == stacktop.function.maxargs:
                     tokenlist = (stacktop.openbrace, stacktop.closebrace, '$')
                     stacktop.tokenlist = tokenlist
@@ -778,7 +777,7 @@ def parsemakesyntax(d, offset, stopon, iterfunc):
             if token == ':':
                 stacktop.varname = stacktop.expansion
                 stacktop.parsestate = _PARSESTATE_SUBSTFROM
-                stacktop.expansion = data.Expansion()
+                stacktop.expansion = pymake.data.Expansion()
                 stacktop.tokenlist = ('=', stacktop.openbrace, stacktop.closebrace, '$')
             elif token in (')', '}'):
                 fn = functions.VariableRef(stacktop.loc, stacktop.expansion.finish())
@@ -790,7 +789,7 @@ def parsemakesyntax(d, offset, stopon, iterfunc):
             if token == '=':
                 stacktop.substfrom = stacktop.expansion
                 stacktop.parsestate = _PARSESTATE_SUBSTTO
-                stacktop.expansion = data.Expansion()
+                stacktop.expansion = pymake.data.Expansion()
                 stacktop.tokenlist = (stacktop.openbrace, stacktop.closebrace, '$')
             elif token in (')', '}'):
                 # A substitution of the form $(VARNAME:.ee) is probably a mistake, but make
