@@ -1,9 +1,15 @@
+pymake
+======
+
+`Documentation <https://pythonhosted.org/pymake>`_
 INTRODUCTION
+------------
 
 make.py (and the pymake modules that support it) are an implementation of the make tool
 which are mostly compatible with makefiles written for GNU make.
 
 PURPOSE
+-------
 
 The Mozilla project inspired this tool with several goals:
 
@@ -20,6 +26,7 @@ The Mozilla project inspired this tool with several goals:
   our existing makefiles, but change the engine to build a global dependency graph.
 
 KNOWN INCOMPATIBILITIES
+-----------------------
 
 * Order-only prerequisites are not yet supported
 
@@ -47,16 +54,19 @@ KNOWN INCOMPATIBILITIES
   code.
 
 ISSUES
+------
 
 * Speed is a problem.
 
 FUTURE WORK
+-----------
 
 * implement a new type of command which is implemented in python. This would allow us
 to replace the current `nsinstall` binary (and execution costs for the shell and binary) with an
 in-process python solution.
 
 AUTHOR
+------
 
 Initial code was written by Benjamin Smedberg <benjamin@smedbergs.us>. For future releases see
 http://benjamin.smedbergs.us/pymake/
