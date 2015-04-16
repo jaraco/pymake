@@ -9,8 +9,6 @@ import os
 import logging
 import sys
 
-from cStringIO import StringIO
-
 from . import parser
 from . import util
 from .globrelative import glob

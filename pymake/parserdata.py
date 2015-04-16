@@ -1,7 +1,7 @@
 import logging
 import re
 import os
-from cStringIO import StringIO
+import io
 
 from . import data
 from . import parser
@@ -997,7 +997,7 @@ class StatementList(list):
             s.dump(fd, indent)
 
     def __str__(self):
-        fd = StringIO()
+        fd = io.StringIO()
         self.dump(fd, '')
         return fd.getvalue()
 

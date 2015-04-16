@@ -6,7 +6,7 @@ import logging
 import re
 import os
 import sys
-from cStringIO import StringIO
+import io
 
 from . import globrelative
 from . import parserdata
@@ -341,7 +341,7 @@ class Expansion(BaseExpansion, list):
                 fd.write(e)
 
     def resolvestr(self, makefile, variables, setting=[]):
-        fd = StringIO()
+        fd = io.StringIO()
         self.resolve(makefile, variables, fd, setting)
         return fd.getvalue()
 
