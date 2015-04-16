@@ -83,11 +83,3 @@ FUTURE WORK
   to replace the current `nsinstall` binary (and execution costs for the shell
   and binary) with an
   in-process python solution.
-
-AUTHOR
-------
-
-Initial code was written by Benjamin Smedberg <benjamin@smedbergs.us>.
-For future releases see http://benjamin.smedbergs.us/pymake/
-
-See the LICENSE file for license information (MIT license)

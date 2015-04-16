@@ -18,11 +18,11 @@ sphinx = ['sphinx'] if needs_sphinx else []
 setup_params = dict(
 	name='pymake',
 	use_scm_version=True,
-	author="Jason R. Coombs",
-	author_email="jaraco@jaraco.com",
+	author="Benjamin Smedberg",
+	author_email="benjamin@smedbergs.us",
 	description="pymake",
 	long_description=long_description,
-	url="https://bitbucket.org/jaraco/pymake",
+	url="https://pypi.python.org/pypi/pymake",
 	packages=setuptools.find_packages(),
 	install_requires=[
 	],
